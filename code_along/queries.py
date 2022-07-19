@@ -1,105 +1,64 @@
-# Create a new table in the database called "Stores"
-# | city          | state | employees | website | curbside |
-# |---------------|-------|-----------|---------|----------|
-# | New York      | NY    | 8         | 1       | 1        |
-# | Los Angeles   | CA    | 11        | 0       | 1        |
-# | Seattle       | WA    | 7         | 1       | 0        |
-# | San Francisco | CA    | 5         | 0       | 0        |
-
-# Drop the table so that we can run
-# connect.py without side effects from previous
-# times that we executed the script.
-DROP_STORES = '''
-DROP TABLE IF EXISTS Stores;
-'''
-
-MAKE_STORES = '''
-CREATE TABLE IF NOT EXISTS Stores 
-(city char(200), 
-state char(2), 
-employees int, 
-website int, 
-curbside int);
-'''
-
-# Verify that the table was created correctly
-CHECK_STORES = '''SELECT * FROM Stores;'''
-
-# How many rows are in the table?
-NUM_ROWS = '''SELECT COUNT(*) FROM Stores;'''
-
-# How many Stores have a website and curbside pickup?
-WEBSITE_AND_CURBSIDE = '''
-SELECT COUNT(*) FROM Stores
-WHERE website > 0 AND curbside > 0
-'''
-
-WEBSITE_AND_CURBSIDE = '''
-SELECT COUNT(*) FROM Stores
-WHERE website AND curbside;
-'''
-
-# How many stores have more than 10 employees and curbside pickup?
-TEN_AND_CURBSIDE = '''
-SELECT COUNT(*) FROM Stores
-WHERE employees > 10 AND curbside;
-'''
-
-# How many states have stores?
-NUM_STATES = '''SELECT COUNT(DISTINCT state) FROM Stores;'''
-
-# How many tracks?
-NUM_TRACKS = '''SELECT COUNT(*) FROM tracks;'''
-
 # How many Genres?
-NUM_GENRES = '''SELECT COUNT(*) FROM genres;'''
+NUM_GENRES = '''SELECT COUNT(*) from genres;'''
 
-# What is the shortest track?
-SHORTEST_TRACK = '''
-SELECT Name, Milliseconds FROM tracks
-ORDER BY Milliseconds
-LIMIT 1;
+# How many Albums?
+NUM_ALBUMS = '''SELECT COUNT(*) from albums;'''
+
+# How many Artists?
+NUM_ARTISTS = '''SELECT COUNT(*) from artists;'''
+
+# How many Tracks?
+NUM_TRACKS = '''SELECT COUNT(*) from tracks;'''
+
+# What is the Genre with the greatest number of albums?
+MOST_ALBUMS_GENRE = '''
+    SELECT genres.Name, COUNT(tracks.AlbumId) as num_albums FROM genres
+    JOIN tracks
+    ON genres.GenreId = tracks.GenreId
+    GROUP BY genres.Name
+    ORDER BY num_albums DESC
+    LIMIT 1;
 '''
 
-# What is the longest track?
-LONGEST_TRACK = '''
-SELECT Name, Milliseconds FROM tracks
-ORDER BY Milliseconds DESC
-LIMIT 1;
+# What is then name of the artist that has written the most albums?
+MOST_ALBUMS_ARTIST = '''
+    SELECT Name, COUNT(AlbumId) as num_albums FROM albums
+    JOIN artists
+    ON albums.ArtistId = artists.ArtistId
+    GROUP BY Name
+    ORDER BY num_albums DESC
+    LIMIT 1;
 '''
 
-# How many tracks are longer than 5 minutes?
-LONG_TRACKS = '''
-SELECT COUNT(*) FROM tracks
-WHERE Milliseconds > 300000;
+# What is the name of the playlist with the longest runtime?
+LONGEST_PLAYLIST = '''
+    SELECT PlaylistId, SUM(tracks.Milliseconds) AS duration_ms FROM tracks 
+    JOIN playlist_track
+    ON tracks.TrackId = playlist_track.TrackId
+    GROUP BY PlaylistId
+    ORDER BY duration_ms DESC
+    LIMIT 2;
 '''
 
-# Who is the composer with the most tracks?
-# IF *NULL* is an acceptable answer
-PROLIFIC_COMPOSER_NULL = '''
-SELECT  Composer, COUNT(*) as num_tracks FROM TRACKS
-GROUP BY Composer
-ORDER BY num_tracks DESC
-LIMIT 1;
+# What is the name of the artist that writes the shortest songs –on average?
+
+SHORT_SONG_ARTIST = '''
+    SELECT artists.Name, AVG(Milliseconds) AS avg_length FROM tracks
+    JOIN albums
+    ON tracks.AlbumId = albums.AlbumId
+    JOIN artists
+    ON albums.ArtistId = artists.ArtistId
+    GROUP BY artists.Name
+    ORDER BY avg_length
+    LIMIT 1;
 '''
 
-# Who is the composer with the most tracks?
-# IF *NULL* is not an acceptable answer
-# WHERE can be used BEFORE a GROUP BY, but not after
-# after a GROUP BY we use HAVING 
-PROLIFIC_COMPOSER = '''
-SELECT Composer, COUNT(*) as num_tracks FROM TRACKS
-WHERE Composer IS NOT NULL
-GROUP BY Composer
-ORDER BY num_tracks DESC
-LIMIT 1;
-'''
-
-# How many composers have more than 10 tracks?
-MORE_THAN_TEN = '''
-SELECT COUNT(*) FROM 
-(SELECT COMPOSER, COUNT(*) as num_tracks FROM TRACKS
-WHERE Composer IS NOT NULL
-GROUP BY Composer
-HAVING num_tracks > 10);
+# Which employee has been the Support Rep for the greatest number of customers?
+BUSIEST_SUPPORT_REP = '''
+    SELECT employees.Firstname, employees.LastName, COUNT(CustomerId)  as num_customers FROM employees
+    JOIN customers
+    ON customers.SupportRepId = employees.EmployeeId
+    GROUP BY EmployeeId
+    ORDER BY num_customers DESC
+    LIMIT 1;
 '''
